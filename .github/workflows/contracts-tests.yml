@@ -1,0 +1,53 @@
+name: test
+
+on: 
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Hardhat project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: 'Check out the repo'
+        uses: 'actions/checkout@v3'
+
+      - name: 'Install Node.js'
+        uses: 'actions/setup-node@v3'
+        with:
+          cache: 'yarn'
+          node-version: 20
+
+      - name: 'Install the dependencies'
+        run: 'yarn install'
+
+      - name: 'Run build'
+        run: 'npx hardhat compile'
+        id: build
+
+      - name: 'Run tests'
+        run: 'npx hardhat test'
+        id: tests
+      
+      - name: Run coverage
+        run: |
+          npx hardhat coverage
+        id: coverage
+
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v2.2.3
+        with:
+          github-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
